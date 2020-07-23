@@ -1,0 +1,28 @@
+import { NgModule } from '@angular/core';
+import { StoreModule } from '@ngrx/store';
+import { playerReducer } from './reducers/player.reducer';
+import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import { environment } from 'src/environments/environment';
+
+
+
+@NgModule({
+  declarations: [],
+  imports: [
+    StoreModule.forRoot({player:playerReducer},{
+      // 在开发环境下检测这些是否合法
+      runtimeChecks: {
+        strictStateImmutability: true,
+        strictActionImmutability: true,
+        strictStateSerializability: true,
+        strictActionSerializability: true,
+      },
+    }),
+    StoreDevtoolsModule.instrument({
+      maxAge:20,
+      // 在生产环境下生效
+      logOnly:environment.production
+    })
+  ]
+})
+export class AppStoreModule { }

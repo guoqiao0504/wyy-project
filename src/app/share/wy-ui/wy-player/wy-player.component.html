@@ -1,0 +1,68 @@
+<div class="m-player" (click)="selfClick = true">
+    <div class="lock">
+        <div class="left"><i></i></div>
+    </div>
+    <div class="hand"></div>
+    <div class="container">
+        <div class="wrap">
+            <div class="btns">
+                <i class="prev" (click)="onPrev(currentIndex-1)"></i>
+                <i class="toggle" [class.playing]="playing" (click)="onToggle()"></i>
+                <i class="next" (click)="onNext(currentIndex+1)"></i>
+            </div>
+
+            <div class="head">
+                <img [src]="picUrl" alt="">
+                <i class="mask"></i>
+            </div>
+
+            <div class="play">
+                <div class="words clearfix">
+                    <p class="ellipsis margin-bottom-none">{{currentSong?.name}}</p>
+                    <ul class="songs clearfix margin-bottom-none">
+                        <li *ngFor="let item of currentSong?.ar; last as isLast">
+                            <a href="">{{item.name}}</a>
+                            <span [hidden]="isLast">/</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bar">
+                    <div class="slider-wrap">
+                        <app-wy-slider [bufferOffset]="bufferPercent" [(ngModel)]="percent"
+                            (wyOnAfterChange)="onPercentChange($event)"></app-wy-slider>
+                    </div>
+                    <span class="time">
+                        <em>{{currentTime | formatTime}}</em> / {{duration | formatTime}}
+                    </span>
+                </div>
+            </div>
+
+            <div class="oper">
+                <i class="like" title="收藏"></i>
+                <i class="share" title="分享"></i>
+            </div>
+            <div class="ctrl">
+                <i class="volume" title="音量" (click)="toggleVolPanel($event)"></i>
+                <i [ngClass]="currentMode.type" [title]="currentMode.label" (click)="changeMode()"></i>
+                <p class="open" (click)="toggleListPanel()">
+                    <span></span>
+                </p>
+                <div class="control-vol" [hidden]="!showVolumePanel">
+                    <app-wy-slider [wyVertical]="true" [(ngModel)]="volume" (ngModelChange)="onVolumeChange($event)">
+                    </app-wy-slider>
+                </div>
+            </div>
+            <app-wy-player-panel [playing]="playing" [songList]="songList" [currentSong]="currentSong" [show]="showPanel"
+                (onClose)="showPanel = false" (onChangeSong)="onChangeSong($event)">
+            </app-wy-player-panel>
+        </div>
+    </div>
+    <!-- 
+        (canplay)="onCanplay()"当歌曲可以开始播放的时候触发这个事件
+        (timeupdate)="onTimeUpdate($event)"监听当前歌曲播放时间
+        (ended)="onEnded()"监听歌曲播放结束
+     -->
+    <audio #audio [src]="currentSong?.url" (canplay)="onCanplay()" (timeupdate)="onTimeUpdate($event)"
+        (ended)="onEnded()">
+    </audio>
+</div>

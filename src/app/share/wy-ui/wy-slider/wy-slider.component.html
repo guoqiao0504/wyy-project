@@ -1,0 +1,8 @@
+<div class="wy-slider" #wySlider [class.wy-slider-vertical] = "wyVertical">
+    <!-- 进度条 -->
+    <app-wy-slider-track [wyVertical]="wyVertical" [wyLength]="bufferOffset" [wyBuffer]="true"></app-wy-slider-track>
+    <!-- 缓冲条 -->
+    <app-wy-slider-track [wyVertical]="wyVertical" [wyLength]="offset"></app-wy-slider-track>
+    <!-- 滑块按钮 -->
+    <app-wy-slider-handle [wyVertical]="wyVertical" [wyOffset]="offset"></app-wy-slider-handle>
+</div>
