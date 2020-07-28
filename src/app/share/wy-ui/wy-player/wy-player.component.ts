@@ -1,29 +1,52 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, Inject } from '@angular/core';
-import { Store, select } from '@ngrx/store';
-import { AppStoreModule } from 'src/app/store';
-import { getSongList, getPlayList, getCurrentInde, getPlayer, getPlayMode, getCurrentSong } from 'src/app/store/selectors/player.selector';
-import { Song } from 'src/app/services/date.types/common.types';
-import { PlayMode } from './player-type';
-import { SetCurrentInde, SetPlayMode, SetPlayList } from 'src/app/store/actions/player.actions';
-import { Subscription, fromEvent } from 'rxjs';
-import { DOCUMENT } from '@angular/common';
-import { shuffle, findIndex } from 'src/app/utils/array';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
+  Inject,
+} from "@angular/core";
+import { Store, select } from "@ngrx/store";
+import { AppStoreModule } from "src/app/store";
+import {
+  getSongList,
+  getPlayList,
+  getCurrentInde,
+  getPlayer,
+  getPlayMode,
+  getCurrentSong,
+} from "src/app/store/selectors/player.selector";
+import { Song } from "src/app/services/date.types/common.types";
+import { PlayMode } from "./player-type";
+import {
+  SetCurrentInde,
+  SetPlayMode,
+  SetPlayList,
+} from "src/app/store/actions/player.actions";
+import { Subscription, fromEvent } from "rxjs";
+import { DOCUMENT } from "@angular/common";
+import { shuffle, findIndex } from "src/app/utils/array";
+import { WyPlayerPanelComponent } from "./wy-player-panel/wy-player-panel.component";
 
-const modeTypes: PlayMode[] = [{
-  type: 'loop',
-  label: '循环'
-}, {
-  type: 'random',
-  label: '随机'
-}, {
-  type: 'singleLoop',
-  label: '单曲循环'
-}]
+const modeTypes: PlayMode[] = [
+  {
+    type: "loop",
+    label: "循环",
+  },
+  {
+    type: "random",
+    label: "随机",
+  },
+  {
+    type: "singleLoop",
+    label: "单曲循环",
+  },
+];
 
 @Component({
-  selector: 'app-wy-player',
-  templateUrl: './wy-player.component.html',
-  styleUrls: ['./wy-player.component.less']
+  selector: "app-wy-player",
+  templateUrl: "./wy-player.component.html",
+  styleUrls: ["./wy-player.component.less"],
 })
 export class WyPlayerComponent implements OnInit {
   percent = 0;
@@ -52,7 +75,7 @@ export class WyPlayerComponent implements OnInit {
 
   // 是否显示列表面板
   showPanel = false;
-  
+
   // 绑定windows的click事件
   winClick: Subscription;
 
@@ -65,26 +88,38 @@ export class WyPlayerComponent implements OnInit {
   // 记录播放模式点击次数
   modeCount = 0;
 
-  @ViewChild('audio', { static: true }) private audio: ElementRef;
+  @ViewChild("audio", { static: true }) private audio: ElementRef;
+  @ViewChild(WyPlayerPanelComponent, { static: false })
+  private playerPanel: WyPlayerPanelComponent;
   private audioEl: HTMLAudioElement;
 
   constructor(
     private store$: Store<AppStoreModule>,
     @Inject(DOCUMENT) private doc: Document
   ) {
-    const appStore$ = this.store$.pipe(select(getPlayer))
-    appStore$.pipe(select(getSongList)).subscribe(list => this.watchList(list, 'songList'));
-    appStore$.pipe(select(getPlayList)).subscribe(list => this.watchList(list, 'playList'));
-    appStore$.pipe(select(getCurrentInde)).subscribe(index => this.watchCurrentIndex(index));
-    appStore$.pipe(select(getPlayMode)).subscribe(mode => this.watchPlayMode(mode));
-    appStore$.pipe(select(getCurrentSong)).subscribe(song => this.watchCurrentSong(song));
+    const appStore$ = this.store$.pipe(select(getPlayer));
+    appStore$
+      .pipe(select(getSongList))
+      .subscribe((list) => this.watchList(list, "songList"));
+    appStore$
+      .pipe(select(getPlayList))
+      .subscribe((list) => this.watchList(list, "playList"));
+    appStore$
+      .pipe(select(getCurrentInde))
+      .subscribe((index) => this.watchCurrentIndex(index));
+    appStore$
+      .pipe(select(getPlayMode))
+      .subscribe((mode) => this.watchPlayMode(mode));
+    appStore$
+      .pipe(select(getCurrentSong))
+      .subscribe((song) => this.watchCurrentSong(song));
   }
 
   ngOnInit() {
     this.audioEl = this.audio.nativeElement;
-    console.log('audio', this.audio.nativeElement);
+    console.log("audio", this.audio.nativeElement);
     console.log("audioEl", this.audioEl);
-    console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$$', this.percent);
+    console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$", this.percent);
     console.log("+++++++++++++++++++++++", this.modeCount);
   }
   watchList(list: Song[], type: string) {
@@ -99,7 +134,7 @@ export class WyPlayerComponent implements OnInit {
     if (this.songList) {
       let list = this.songList.slice();
       // 如果是随机模式就把playList数组打乱，在进行播放
-      if (mode.type === 'random') {
+      if (mode.type === "random") {
         list = shuffle(this.songList);
         console.log("list", list);
         this.updateCurrentIndex(list, this.currentSong);
@@ -108,24 +143,27 @@ export class WyPlayerComponent implements OnInit {
     }
   }
   updateCurrentIndex(list: Song[], song: Song) {
-    const newIndex = findIndex(list,song);
+    const newIndex = findIndex(list, song);
     this.store$.dispatch(SetCurrentInde({ currentIndex: newIndex }));
   }
   watchCurrentSong(song: Song) {
-
     if (song) {
       this.currentSong = song;
       // 因为当前时长是毫秒，总时长是秒，把总时长变成秒
       this.duration = song.dt / 1000;
-      console.log("dwqsadfs", this.currentSong)
+      console.log("dwqsadfs", this.currentSong);
     }
   }
 
   onPercentChange(per) {
-    console.log('per', per);
+    console.log("per", per);
     if (this.currentSong) {
       // 当前播放时长 = 总时长*(per / 100)
-      this.audioEl.currentTime = this.duration * (per / 100);
+      const currentTime = this.duration * (per / 100);
+      this.audioEl.currentTime = currentTime;
+      if (this.playerPanel) {
+        this.playerPanel.seekLyric(currentTime * 1000);
+      }
     }
   }
 
@@ -139,8 +177,9 @@ export class WyPlayerComponent implements OnInit {
     this.playing = true;
   }
   get picUrl(): string {
-    return this.currentSong ? this.currentSong.al.picUrl : 'http://p2.music.126.net/PFJv30gvgR9gkVYUOnHnLQ==/109951163998003959.jpg?param=34y34';
-
+    return this.currentSong
+      ? this.currentSong.al.picUrl
+      : "http://p2.music.126.net/PFJv30gvgR9gkVYUOnHnLQ==/109951163998003959.jpg?param=34y34";
   }
 
   onTimeUpdate(e: Event) {
@@ -175,7 +214,6 @@ export class WyPlayerComponent implements OnInit {
     }
   }
 
-
   // 上一曲
   onPrev(index: number) {
     if (!this.songReady) return;
@@ -203,6 +241,10 @@ export class WyPlayerComponent implements OnInit {
   loop() {
     this.audioEl.currentTime = 0;
     this.play();
+    if (this.playerPanel) {
+      // 重置歌词
+      this.playerPanel.seekLyric(0);
+    }
   }
 
   updateIndex(index: number) {
@@ -216,7 +258,7 @@ export class WyPlayerComponent implements OnInit {
   }
 
   // 控制音量面板
-  togglePanel(type:string) {
+  togglePanel(type: string) {
     this[type] = !this[type];
     // 如果这个音量面板显示，绑定全局的bindDocumentClickListener
     if (this.showVolumePanel || this.showPanel) {
@@ -228,7 +270,7 @@ export class WyPlayerComponent implements OnInit {
 
   bindDocumentClickListener() {
     if (!this.winClick) {
-      this.winClick = fromEvent(this.doc, 'click').subscribe(() => {
+      this.winClick = fromEvent(this.doc, "click").subscribe(() => {
         // 如果不存在，说明点击了播放器以外的部分
         if (!this.selfClick) {
           this.showVolumePanel = false;
@@ -236,7 +278,7 @@ export class WyPlayerComponent implements OnInit {
           this.unbindDocumentClickListener();
         }
         this.selfClick = false;
-      })
+      });
     }
   }
 
@@ -248,26 +290,27 @@ export class WyPlayerComponent implements OnInit {
   }
 
   toggleVolPanel() {
-    this.togglePanel('showVolumePanel');
+    this.togglePanel("showVolumePanel");
   }
 
-// 控制列表面板
+  // 控制列表面板
   toggleListPanel() {
     if (this.songList.length) {
-    this.togglePanel('showPanel');
-      
+      this.togglePanel("showPanel");
     }
   }
 
   // 改变模式
   changeMode() {
-    this.store$.dispatch(SetPlayMode({ playMode: modeTypes[++this.modeCount % 3] }))
+    this.store$.dispatch(
+      SetPlayMode({ playMode: modeTypes[++this.modeCount % 3] })
+    );
   }
 
   //播放结束
   onEnded() {
     this.playing = false;
-    if (this.currentMode.type === 'singleLoop') {
+    if (this.currentMode.type === "singleLoop") {
       this.loop();
     } else {
       this.onNext(this.currentIndex + 1);
@@ -275,8 +318,7 @@ export class WyPlayerComponent implements OnInit {
   }
 
   // 改变歌曲
-  onChangeSong(song:Song){
+  onChangeSong(song: Song) {
     this.updateCurrentIndex(this.playList, song);
-
   }
 }
