@@ -22,11 +22,14 @@ import {
   SetCurrentInde,
   SetPlayMode,
   SetPlayList,
+  SetSongList,
 } from "src/app/store/actions/player.actions";
 import { Subscription, fromEvent } from "rxjs";
 import { DOCUMENT } from "@angular/common";
 import { shuffle, findIndex } from "src/app/utils/array";
 import { WyPlayerPanelComponent } from "./wy-player-panel/wy-player-panel.component";
+import { NzModalService } from "ng-zorro-antd";
+import { BatchActionsService } from 'src/app/store/batch-actions.service';
 
 const modeTypes: PlayMode[] = [
   {
@@ -95,7 +98,9 @@ export class WyPlayerComponent implements OnInit {
 
   constructor(
     private store$: Store<AppStoreModule>,
-    @Inject(DOCUMENT) private doc: Document
+    @Inject(DOCUMENT) private doc: Document,
+    private nzModalServe: NzModalService,
+    private batchActions:BatchActionsService
   ) {
     const appStore$ = this.store$.pipe(select(getPlayer));
     appStore$
@@ -320,5 +325,19 @@ export class WyPlayerComponent implements OnInit {
   // 改变歌曲
   onChangeSong(song: Song) {
     this.updateCurrentIndex(this.playList, song);
+  }
+
+  // 删除歌曲
+  onDeleteSong(song: Song) {
+    this.batchActions.DeleteSong(song)
+  }
+  // 清空歌曲
+  onClearSong() {
+    this.nzModalServe.confirm({
+      nzTitle: "确认清空列表？",
+      nzOnOk: () => {
+        this.batchActions.ClearSong();
+      },
+    });
   }
 }

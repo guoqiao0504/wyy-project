@@ -6,10 +6,7 @@ import { map } from 'rxjs/internal/operators';
 import { SheetService } from '../../services/sheet.service';
 import { Store, select } from '@ngrx/store';
 import { AppStoreModule } from 'src/app/store';
-import { SetSongList, SetPlayList, SetCurrentInde } from '../../store/actions/player.actions';
-import { PlayState } from 'src/app/store/reducers/player.reducer';
-import { getPlayer } from 'src/app/store/selectors/player.selector';
-import { findIndex, shuffle } from 'src/app/utils/array';
+import { BatchActionsService } from 'src/app/store/batch-actions.service';
 
 @Component({
   selector: 'app-home',
@@ -24,13 +21,12 @@ export class HomeComponent implements OnInit {
   /**保存singer数据 */
   singers: Singer[];
 
-  playerState: PlayState
 
   @ViewChild(NzCarouselComponent, { static: true }) private nzCarousel: NzCarouselComponent;
   constructor(
     private router: ActivatedRoute,
     private sheetService: SheetService,
-    private store$: Store<AppStoreModule>
+    private batchActionsServe:BatchActionsService
   ) {
     // data是一个Observable对象，包含路由配置的数据：homerouting文件的data和resolve
     this.router.data.pipe(map(res => res.homeDatas)).subscribe(([banners, hotTags, songSheetList, singers]) => {
@@ -44,7 +40,6 @@ export class HomeComponent implements OnInit {
       this.singers = singers
     })
 
-    this.store$.pipe(select(getPlayer)).subscribe(res => this.playerState = res)
   }
 
   ngOnInit() {
@@ -59,17 +54,7 @@ export class HomeComponent implements OnInit {
   onPlaySheet(id: number) {
     console.log('id', id)
     this.sheetService.playSheet(id).subscribe(list => {
-      this.store$.dispatch(SetSongList({ songList: list }));
-      let trueIndex = 0;
-      let trueList = list.slice();
-      if (this.playerState.playMode.type == "random") {
-        trueIndex = findIndex(trueList, list[trueIndex]);
-        trueList = shuffle(list || []);
-      }
-
-
-      this.store$.dispatch(SetPlayList({ playList: trueList }));
-      this.store$.dispatch(SetCurrentInde({ currentIndex: 0 }))
+      this.batchActionsServe.selectPlayList({list,index:0});
     })
   }
 }
