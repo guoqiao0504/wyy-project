@@ -29,7 +29,8 @@ import { DOCUMENT } from "@angular/common";
 import { shuffle, findIndex } from "src/app/utils/array";
 import { WyPlayerPanelComponent } from "./wy-player-panel/wy-player-panel.component";
 import { NzModalService } from "ng-zorro-antd";
-import { BatchActionsService } from 'src/app/store/batch-actions.service';
+import { BatchActionsService } from "src/app/store/batch-actions.service";
+import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
 
 const modeTypes: PlayMode[] = [
   {
@@ -82,8 +83,8 @@ export class WyPlayerComponent implements OnInit {
   // 绑定windows的click事件
   winClick: Subscription;
 
-  // 是否点击的是音量面板本身
-  selfClick = false;
+  // 是否绑定document click事件
+  bindFlag = false;
 
   // 当前模式
   currentMode: PlayMode;
@@ -100,7 +101,7 @@ export class WyPlayerComponent implements OnInit {
     private store$: Store<AppStoreModule>,
     @Inject(DOCUMENT) private doc: Document,
     private nzModalServe: NzModalService,
-    private batchActions:BatchActionsService
+    private batchActions: BatchActionsService
   ) {
     const appStore$ = this.store$.pipe(select(getPlayer));
     appStore$
@@ -142,9 +143,9 @@ export class WyPlayerComponent implements OnInit {
       if (mode.type === "random") {
         list = shuffle(this.songList);
         console.log("list", list);
-        this.updateCurrentIndex(list, this.currentSong);
-        this.store$.dispatch(SetPlayList({ playList: list }));
       }
+      this.updateCurrentIndex(list, this.currentSong);
+      this.store$.dispatch(SetPlayList({ playList: list }));
     }
   }
   updateCurrentIndex(list: Song[], song: Song) {
@@ -267,28 +268,15 @@ export class WyPlayerComponent implements OnInit {
     this[type] = !this[type];
     // 如果这个音量面板显示，绑定全局的bindDocumentClickListener
     if (this.showVolumePanel || this.showPanel) {
-      this.bindDocumentClickListener();
+      this.bindFlag = true;
     } else {
-      this.unbindDocumentClickListener();
+      this.bindFlag = false;
     }
-  }
-
-  bindDocumentClickListener() {
-    if (!this.winClick) {
-      this.winClick = fromEvent(this.doc, "click").subscribe(() => {
-        // 如果不存在，说明点击了播放器以外的部分
-        if (!this.selfClick) {
-          this.showVolumePanel = false;
-          this.showPanel = false;
-          this.unbindDocumentClickListener();
-        }
-        this.selfClick = false;
-      });
-    }
+    this.bindFlag = (this.showVolumePanel || this.showPanel);
   }
 
   unbindDocumentClickListener() {
-    if (this.selfClick) {
+    if (this.winClick) {
       this.winClick.unsubscribe();
       this.winClick = null;
     }
@@ -329,7 +317,7 @@ export class WyPlayerComponent implements OnInit {
 
   // 删除歌曲
   onDeleteSong(song: Song) {
-    this.batchActions.DeleteSong(song)
+    this.batchActions.DeleteSong(song);
   }
   // 清空歌曲
   onClearSong() {
@@ -339,5 +327,13 @@ export class WyPlayerComponent implements OnInit {
         this.batchActions.ClearSong();
       },
     });
+  }
+
+  onClickOutSide() {
+    console.log("onClickOutSide");
+    this.showVolumePanel = false;
+    this.showPanel = false;
+    this.bindFlag = false;
+    // this.unbindDocumentClickListener();
   }
 }

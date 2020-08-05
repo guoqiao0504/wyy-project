@@ -50,6 +50,7 @@ export class WyPlayerPanelComponent implements OnInit, OnChanges {
 
   lyricRefs: NodeList;
 
+  startLine = 3;
   constructor(
     // @Inject(WINDOW) private win:Window
     private songService: SongService
@@ -87,6 +88,9 @@ export class WyPlayerPanelComponent implements OnInit, OnChanges {
           if (this.currentSong) {
             this.scrollToCurrent(0);
           }
+          if (this.lyricRefs) {
+            this.scrollToCurrentLyric(0);
+          }
         });
         // this.win.setTimeout(() => {
         //   if (this.currentSong) {
@@ -97,7 +101,7 @@ export class WyPlayerPanelComponent implements OnInit, OnChanges {
     }
   }
 
-  updateCurrentIndex(){
+  updateCurrentIndex() {
     this.currentIndex = findIndex(this.songList, this.currentSong);
   }
 
@@ -121,6 +125,13 @@ export class WyPlayerPanelComponent implements OnInit, OnChanges {
     }
   }
 
+  scrollToCurrentLyric(speed = 300) {
+    const targetLine = this.lyricRefs[this.currentLineNum - this.startLine];
+    if (targetLine) {
+      this.wyScroll.last.scrollToElement(targetLine, speed, false, false);
+    }
+  }
+
   updateLyric() {
     this.resetLyric();
     this.songService.getLyric(this.currentSong.id).subscribe((res) => {
@@ -128,8 +139,8 @@ export class WyPlayerPanelComponent implements OnInit, OnChanges {
       this.lyric = new WyLyric(res);
       this.currentLyric = this.lyric.lines;
       console.log("==============", this.currentLyric);
-      const startLine = res.tlyric ? 1 : 3;
-      this.handleLyric(startLine);
+      this.startLine = res.tlyric ? 1 : 3;
+      this.handleLyric();
       // 切歌后把歌词重置到最顶部
       this.wyScroll.last.scrollTo(0, 0);
       // 如果当前是播放状态，歌词跟着播放
@@ -139,7 +150,7 @@ export class WyPlayerPanelComponent implements OnInit, OnChanges {
     });
   }
 
-  handleLyric(startLine = 3) {
+  handleLyric() {
     this.lyric.handler.subscribe(({ lineNum }) => {
       console.log("lineNum", lineNum);
       if (!this.lyricRefs) {
@@ -151,12 +162,9 @@ export class WyPlayerPanelComponent implements OnInit, OnChanges {
 
       if (this.lyricRefs.length) {
         this.currentLineNum = lineNum;
-        console.log("lineNum,startLine:", lineNum + "-----------" + startLine);
-        if (lineNum > startLine) {
-          const targetLine = this.lyricRefs[lineNum - startLine];
-          if (targetLine) {
-            this.wyScroll.last.scrollToElement(targetLine, 300, false, false);
-          }
+        console.log("lineNum,startLine:", lineNum + "-----------" + this.startLine);
+        if (lineNum > this.startLine) {
+          this.scrollToCurrentLyric(300);
         } else {
           this.wyScroll.last.scrollTo(0, 0);
         }
